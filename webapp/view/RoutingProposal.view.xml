@@ -13,7 +13,7 @@
         class="sapUiResponsiveContentPadding">
         
         <content>
-            <VBox id="_IDGenVBox1" class="sapUiLargeMargin">
+            <VBox id="_IDGenVBox1" class="sapUiLargeMargin" fitContainer="true">
                 
                 <!-- Material Header Card -->
                 <layout:VerticalLayout id="_IDGenVerticalLayout" 
@@ -22,20 +22,42 @@
                     <VBox id="_IDGenVBox2" 
                         class="sapUiContentPadding sapUiSmallMarginBottom"
                         alignItems="Center">
-                        <Label id="_IDGenLabel" 
+                        <Title id="_IDGenLabel" 
                             text="Material" 
+                            level="H3"
                             class="sapUiTinyMarginBottom"/>
                         <Title id="_IDGenTitle" 
                             text="{viewModel>/Material}" 
                             level="H1"
                             titleStyle="H1"
-                            class="sapUiLargeMarginBottom"/>
+                            class="sapUiTinyMarginBottom"/>
                     </VBox>
                 </layout:VerticalLayout>
                 
-                <!-- Routings Section -->
-                <Panel id="_IDGenPanel" 
+                <!-- View Toggle Button -->
+                <HBox id="_IDGenHBox2" 
+                    justifyContent="End" 
+                    class="sapUiSmallMarginBottom">
+                    <SegmentedButton id="viewToggle" 
+                        selectedKey="{viewModel>/ViewMode}"
+                        selectionChange=".onViewModeChange">
+                        <items>
+                            <SegmentedButtonItem id="_IDGenSegmentedButtonItem1" 
+                                key="table" 
+                                icon="sap-icon://table-view" 
+                                text="Table View"/>
+                            <SegmentedButtonItem id="_IDGenSegmentedButtonItem2" 
+                                key="single" 
+                                icon="sap-icon://detail-view" 
+                                text="Single View"/>
+                        </items>
+                    </SegmentedButton>
+                </HBox>
+                
+                <!-- TABLE VIEW -->
+                <Panel id="tableViewPanel" 
                     headerText="Production Routings" 
+                    visible="{= ${viewModel>/ViewMode} === 'table' }"
                     class="sapUiLargeMargin"
                     width="auto"
                     expandable="false"
@@ -48,11 +70,11 @@
                                 id="routingsTable"
                                 items="{/Z_POC_C_ROUTING_ACTL_TIME}"
                                 growing="true"
-                                growingThreshold="20"
+                                growingThreshold="10"
+                                growingScrollToLoad="true"
                                 mode="None"
                                 updateFinished=".onTableUpdateFinished"
-                                width="auto"
-                                class="sapUiMediumMarginTop sapUiMediumMarginBottom">
+                                width="auto">
                                 
                                 <columns>
                                     <Column id="_IDGenColumn" 
@@ -90,6 +112,15 @@
                                         hAlign="Begin">
                                         <Text id="_IDGenText3" 
                                             text="Proposed Times"
+                                            class="sapUiSmallMarginBegin"/>
+                                    </Column>
+                                    <Column id="_IDGenColumn4" 
+                                        width="35%"
+                                        minScreenWidth="Tablet"
+                                        demandPopin="false"
+                                        hAlign="Begin">
+                                        <Text id="_IDGenText4" 
+                                            text=""
                                             class="sapUiSmallMarginBegin"/>
                                     </Column>
                                 </columns>
@@ -157,6 +188,7 @@
                                                     class="sapUiTinyMarginTop"/>
                                             </VBox>
                                         </VBox>
+
                                         
                                         <!-- Proposed Times (Editable) -->
                                         <VBox id="_IDGenVBox8" 
@@ -171,26 +203,57 @@
                                                 state="Warning"
                                                 class="sapUiSmallMarginBottom"/>
                                             <VBox id="_IDGenVBox9" class="sapUiTinyMarginTop">
+                                            <HBox id="hbox1" alignItems="Center">
                                                 <Input id="_IDGenInput"
+                                                    width="130px"
+                                                    type="Number"
                                                     value="{ProposedSetupTime}"
-                                                    width="130px"
-                                                    type="Number"
+                                                    placeholder="{ProposedSetupTimePH}"
                                                     change=".onProposedTimeChange"
-                                                    class="sapUiTinyMarginTop"/>
+                                                    class="sapUiTinyMarginTop">
+                                                    <customData>
+                                                        <core:CustomData key="selectOnFocus" value="true" />
+                                                    </customData>
+                                                </Input>
+                                                <HBox id="hBox4">
+                                                    <Text id="minTxt" class="sapUiSmallMarginBegin" text="min"></Text>
+                                                </HBox>
+                                            </HBox>
+                                            <HBox id="hbox2" alignItems="Center">
                                                 <Input id="_IDGenInput1"
+                                                    width="130px"
+                                                    type="Number"
                                                     value="{ProposedMachineTime}"
-                                                    width="130px"
-                                                    type="Number"
+                                                    placeholder="{ProposedMachineTimePH}"
                                                     change=".onProposedTimeChange"
-                                                    class="sapUiTinyMarginTop"/>
+                                                    class="sapUiTinyMarginTop">
+                                                    <customData>
+                                                        <core:CustomData key="selectOnFocus" value="true" />
+                                                    </customData>
+                                                </Input>
+                                                <HBox id="hBox5">
+                                                    <Text id="minTxt2" class="sapUiSmallMarginBegin" text="min"></Text>
+                                                </HBox>
+                                            </HBox>
+                                            <HBox id="hbox3" alignItems="Center">
                                                 <Input id="_IDGenInput2"
-                                                    value="{ProposedLaborTime}"
                                                     width="130px"
                                                     type="Number"
+                                                    value="{ProposedLaborTime}"
+                                                    placeholder="{ProposedLaborTimePH}"
                                                     change=".onProposedTimeChange"
-                                                    class="sapUiTinyMarginTop"/>
+                                                    class="sapUiTinyMarginTop">
+                                                    <customData>
+                                                        <core:CustomData key="selectOnFocus" value="true" />
+                                                    </customData>
+                                                </Input>
+                                                <HBox id="hBox6" class="sapUiSmallMarginBegin">
+                                                    <Text id="minTxt3" text="min"></Text>
+                                                </HBox>
+                                            </HBox>
                                             </VBox>
                                         </VBox>
+                                        
                                         
                                     </ColumnListItem>
                                 </items>
@@ -237,17 +300,289 @@
                                 </content>
                             </Panel>
                             
-                            <!-- Save Button -->
+                            <!-- Action Buttons -->
                             <VBox id="_IDGenVBox13" 
                                 alignItems="Center" 
                                 class="sapUiLargeMarginTop sapUiLargeMarginBottom">
-                                <Button id="_IDGenButton"
-                                    text="Save New Routing Times"
-                                    type="Emphasized"
-                                    icon="sap-icon://save"
-                                    press=".onSaveNewRoutingTimes"
-                                    width="300px"/>
+                                <HBox id="_IDGenHBox6" justifyContent="Center" width="100%" class="sapUiSmallMarginBottom">
+                                    <Button id="acceptAllButton"
+                                        text="Accept All Proposed Times"
+                                        type="Ghost"
+                                        icon="sap-icon://accept"
+                                        press=".onAcceptAllPlannedTimes"
+                                        visible="{= !${viewModel>/AcceptedAllApplied} }"
+                                        width="300px"
+                                        class="sapUiSmallMarginEnd"/>
+                                    <Button id="revertAcceptAllButton" 
+                                        text="Revert All Proposed Times"
+                                        type="Ghost"
+                                        icon="sap-icon://accept"
+                                        press="._onRevertAllProposedTimes"
+                                        visible="{= ${viewModel>/AcceptedAllApplied} }"
+                                        width="300px"
+                                        class="sapUiSmallMarginEnd"/>
+                                    <Button id="_IDGenButton"
+                                        text="Save New Routing Times"
+                                        type="Emphasized"
+                                        icon="sap-icon://save"
+                                        press=".onSaveNewRoutingTimes"
+                                        width="300px"/>
+                                </HBox>
                             </VBox>
+                            
+                        </VBox>
+                    </content>
+                </Panel>
+                
+                <!-- SINGLE OPERATION VIEW -->
+                <Panel id="singleViewPanel" 
+                    headerText="Operation Entry" 
+                    visible="{= ${viewModel>/ViewMode} === 'single' }"
+                    class="sapUiLargeMargin"
+                    width="auto"
+                    expandable="false"
+                    backgroundDesign="Solid">
+                    
+                    <content>
+                        <VBox id="_IDGenVBox20" class="sapUiContentPadding">
+                            
+                            <!-- Material and Navigation Header -->
+                            <HBox id="_IDGenHBox3" 
+                                width="100%" 
+                                justifyContent="SpaceBetween" 
+                                alignItems="Center"
+                                class="sapUiLargeMarginBottom">
+                                <Title id="_IDGenTitle30" 
+                                    text="Material {viewModel>/Material} - {viewModel>/Plant}"
+                                    level="H2"
+                                    titleStyle="H2"/>
+
+                               
+                            </HBox>
+                            <HBox id="_IDGenHBox7" justifyContent="SpaceAround" alignContent="SpaceAround">
+                                <Title id="txtOperationDescription" level="H3" titleStyle="H3" text="{viewModel>/CurrentOperation/OperationShortText}"></Title>
+                            </HBox>
+                            <!-- Routings Label and Navigation -->
+                            <HBox id="_IDGenHBox4"
+                                width="100%"
+                                justifyContent="SpaceBetween"
+                                alignItems="Center"
+                                class="sapUiLargeMarginBottom">
+                                <Title id="_IDGenTitle31"
+                                    text="Routings:"
+                                    level="H4"/>
+                                <HBox id="_IDGenHBox5" 
+                                    justifyContent="Center" 
+                                    alignItems="Center"
+                                    class="sapUiSmallMarginEnd">
+                                    <Button id="prevButton"
+                                        icon="sap-icon://navigation-left-arrow"
+                                        type="Transparent"
+                                        press=".onPreviousOperation"
+                                        enabled="{= ${viewModel>/CurrentOperationIndex} &gt; 0 }"
+                                        width="60px"/>
+                                    <VBox id="_IDGenVBox21" alignItems="Center" class="sapUiSmallMarginBegin sapUiSmallMarginEnd">
+                                        <Text id="_IDGenText20" 
+                                            text="{viewModel>/OperationCounter}"
+                                            class="sapUiTinyMarginBottom"/>
+                                        <Title id="_IDGenTitle20" 
+                                            text="Operation {viewModel>/CurrentOperation/Operation}" 
+                                            level="H3"
+                                            titleStyle="H3"/>
+                                    </VBox>
+                                    <Button id="nextButton"
+                                        icon="sap-icon://navigation-right-arrow"
+                                        type="Transparent"
+                                        press=".onNextOperation"
+                                        enabled="{= ${viewModel>/CurrentOperationIndex} &lt; ${viewModel>/TotalOperations} - 1 }"
+                                        width="60px"/>
+                                </HBox>
+                            </HBox>
+                            
+                            <!-- Time Entry Table -->
+                            <VBox id="_IDGenVBox40" width="100%" class="sapUiLargeMarginTop">
+                                <HBox id="_IDGenHBox50" width="100%" class="sapUiMediumMarginBottom">
+                                    <!-- Empty corner cell -->
+                                    <VBox id="_IDGenVBox41" width="20%"/>
+                                    <!-- Setup Header -->
+                                    <VBox id="_IDGenVBox42" width="20%" alignItems="Center">
+                                        <Title id="_IDGenTitle40" 
+                                            text="Setup"
+                                            level="H3"
+                                            titleStyle="H3"/>
+                                    </VBox>
+                                    <!-- Machine Header -->
+                                    <VBox id="_IDGenVBox43" width="20%" alignItems="Center">
+                                        <Title id="_IDGenTitle41" 
+                                            text="Machine"
+                                            level="H3"
+                                            titleStyle="H3"/>
+                                    </VBox>
+                                    <!-- Labor Header -->
+                                    <VBox id="_IDGenVBox44" width="20%" alignItems="Center">
+                                        <Title id="_IDGenTitle42" 
+                                            text="Labor"
+                                            level="H3"
+                                            titleStyle="H3"/>
+                                    </VBox>
+                                    <!-- Total Header -->
+                                    <VBox id="_IDGenVBox45" width="20%" alignItems="Center">
+                                        <Title id="_IDGenTitle43" 
+                                            text="Total"
+                                            level="H3"
+                                            titleStyle="H3"/>
+                                    </VBox>
+                                </HBox>
+                                
+                                <!-- Planned Row -->
+                                <HBox id="_IDGenHBox51" width="100%" class="sapUiMediumMarginBottom">
+                                    <!-- Row Label -->
+                                    <VBox id="_IDGenVBox46" width="20%" justifyContent="Center">
+                                        <Title id="_IDGenTitle44" 
+                                            text="Planned"
+                                            level="H4"/>
+                                    </VBox>
+                                    <!-- Setup Planned -->
+                                    <VBox id="_IDGenVBox47" width="20%" alignItems="Center" justifyContent="Center">
+                                        <Title id="_IDGenTitle45" 
+                                            text="{viewModel>/CurrentOperation/SetupTime} min"
+                                            level="H3"
+                                            titleStyle="H3"/>
+                                    </VBox>
+                                    <!-- Machine Planned -->
+                                    <VBox id="_IDGenVBox48" width="20%" alignItems="Center" justifyContent="Center">
+                                        <Title id="_IDGenTitle46" 
+                                            text="{viewModel>/CurrentOperation/MachineTime} min"
+                                            level="H3"
+                                            titleStyle="H3"/>
+                                    </VBox>
+                                    <!-- Labor Planned -->
+                                    <VBox id="_IDGenVBox49" width="20%" alignItems="Center" justifyContent="Center">
+                                        <Title id="_IDGenTitle47" 
+                                            text="{viewModel>/CurrentOperation/LaborTime} min"
+                                            level="H3"
+                                            titleStyle="H3"/>
+                                    </VBox>
+                                    <!-- Total Planned -->
+                                    <VBox id="_IDGenVBox50" width="20%" alignItems="Center" justifyContent="Center">
+                                        <Title id="_IDGenTitle48" 
+                                            text="{
+                                                parts: [
+                                                    {path: 'viewModel>/CurrentOperation/SetupTime'}, 
+                                                    {path: 'viewModel>/CurrentOperation/MachineTime'}, 
+                                                    {path: 'viewModel>/CurrentOperation/LaborTime'}
+                                                ],
+                                                formatter: '.formatCurrentOperationTotal'
+                                            }"
+                                            level="H3"
+                                            titleStyle="H3"/>
+                                    </VBox>
+                                </HBox>
+                                
+                                <!-- Proposal Row -->
+                                <HBox id="_IDGenHBox52" width="100%" class="sapUiLargeMarginBottom">
+                                    <!-- Row Label -->
+                                    <VBox id="_IDGenVBox51" width="20%" justifyContent="Center">
+                                        <Title id="_IDGenTitle49" 
+                                            text="Proposal"
+                                            level="H4"/>
+                                    </VBox>
+                                    <!-- Setup Proposal -->
+                                    <VBox id="_IDGenVBox52" width="20%" alignItems="Center" justifyContent="Center">
+                                        <HBox id="Hbox52" alignItems="Center">
+                                            <Input id="setupInput"
+                                                type="Number"
+                                                width="130px"
+                                                textAlign="Center"
+                                                value="{viewModel>/CurrentOperation/ProposedSetupTime}"
+                                                change=".onSingleViewTimeChange"
+                                                placeholder="{viewModel>/CurrentOperation/ProposedSetupTimePH}">
+                                                <customData>
+                                                    <core:CustomData key="selectOnFocus" value="true" />
+                                                    <core:CustomData key="timeType" value="ProposedSetupTime" />
+                                                </customData>
+                                            </Input>
+                                            <Text id="_IDGenText9" text="min" class="sapUiSmallMarginBegin"/>
+                                        </HBox>
+                                    </VBox>
+                                    <!-- Machine Proposal -->
+                                    <VBox id="_IDGenVBox53" width="20%" alignItems="Center" justifyContent="Center">
+                                        <HBox id="Hbox53" alignItems="Center">
+                                            <Input id="machineInput"
+                                                type="Number"
+                                                width="130px"
+                                                textAlign="Center"
+                                                value="{viewModel>/CurrentOperation/ProposedMachineTime}"
+                                                change=".onSingleViewTimeChange"
+                                                placeholder="{viewModel>/CurrentOperation/ProposedMachineTimePH}">
+                                                <customData>
+                                                    <core:CustomData key="selectOnFocus" value="true" />
+                                                    <core:CustomData key="timeType" value="ProposedMachineTime" />
+                                                </customData>
+                                            </Input>
+                                            <Text id="_IDGenText10" text="min" class="sapUiSmallMarginBegin"/>
+                                        </HBox>
+                                    </VBox>
+                                    <!-- Labor Proposal -->
+                                    <VBox id="_IDGenVBox54" width="20%" alignItems="Center" justifyContent="Center">
+                                        <HBox id="HBox54" alignItems="Center">
+                                            <Input id="laborInput"
+                                                type="Number"
+                                                width="130px"
+                                                textAlign="Center"
+                                                value="{viewModel>/CurrentOperation/ProposedLaborTime}"
+                                                change=".onSingleViewTimeChange"
+                                                placeholder="{viewModel>/CurrentOperation/ProposedLaborTimePH}">
+                                                <customData>
+                                                    <core:CustomData key="selectOnFocus" value="true" />
+                                                    <core:CustomData key="timeType" value="ProposedLaborTime" />
+                                                </customData>
+                                            </Input>
+                                            <Text id="_IDGenText11" text="min" class="sapUiSmallMarginBegin"/>
+                                        </HBox>
+                                    </VBox>
+                                    <!-- Total Proposal -->
+                                    <VBox id="_IDGenVBox55" width="20%" alignItems="Center" justifyContent="Center">
+                                        <Title id="_IDGenTitle50" 
+                                            text="{
+                                                parts: [
+                                                    {path: 'viewModel>/CurrentOperation/ProposedSetupTime'}, 
+                                                    {path: 'viewModel>/CurrentOperation/ProposedMachineTime'}, 
+                                                    {path: 'viewModel>/CurrentOperation/ProposedLaborTime'}
+                                                ],
+                                                formatter: '.formatCurrentOperationTotal'
+                                            }"
+                                            level="H3"
+                                            titleStyle="H3"/>
+                                    </VBox>
+                                </HBox>
+                            </VBox>
+                            
+                            <!-- Accept Proposed Times Button -->
+                            <HBox id="_IDGenHBox1"  justifyContent="Center" width="100%" class="sapUiSmallMarginBottom">
+                                    <Button id="acceptAllButton2"
+                                        text="Accept All Proposed Times"
+                                        type="Ghost"
+                                        icon="sap-icon://accept"
+                                        press=".onAcceptAllPlannedTimes"
+                                        visible="{= !${viewModel>/AcceptedAllApplied} }"
+                                        width="300px"
+                                        class="sapUiSmallMarginEnd"/>
+                                    <Button id="revertAcceptAllButton2" 
+                                        text="Revert All Proposed Times"
+                                        type="Ghost"
+                                        icon="sap-icon://accept"
+                                        press="._onRevertAllProposedTimes"
+                                        visible="{= ${viewModel>/AcceptedAllApplied} }"
+                                        width="300px"
+                                        class="sapUiSmallMarginEnd"/>
+                                    <Button id="_IDGenButton2"
+                                        text="Save New Routing Times"
+                                        type="Emphasized"
+                                        icon="sap-icon://save"
+                                        press=".onSaveNewRoutingTimes"
+                                        width="300px"/>
+                                </HBox>
                             
                         </VBox>
                     </content>

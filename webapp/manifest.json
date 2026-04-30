@@ -5,7 +5,21 @@
     "type": "application",
     "i18n": "i18n/i18n.properties",
     "applicationVersion": {
-      "version": "0.0.1"
+      "version": "0.0.2"
+    },
+    "crossNavigation": {
+      "inbounds": {
+        "materialrouting-display": {
+          "semanticObject": "materialrouting",
+          "action": "display",
+          "title": "{{appTitle}}",
+          "subTitle": "",
+          "signature": {
+            "parameters": {},
+            "additionalParameters": "allowed"
+          }
+        }
+      }
     },
     "title": "{{appTitle}}",
     "description": "{{appDescription}}",
@@ -121,5 +135,9 @@
       "async": true,
       "id": "app"
     }
+  },
+  "sap.cloud": {
+    "public": true,
+    "service": "prodroutingmngfree"
   }
 }
