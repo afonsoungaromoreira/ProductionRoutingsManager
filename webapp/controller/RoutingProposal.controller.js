@@ -2,11 +2,9 @@ sap.ui.define([
     "sap/ui/core/mvc/Controller",
     "sap/ui/core/routing/History",
     "sap/ui/model/json/JSONModel",
-    "sap/ui/model/Filter",
-    "sap/ui/model/FilterOperator",
     "sap/m/MessageBox",
     "sap/m/MessageToast"
-], function (Controller, History, JSONModel, Filter, FilterOperator, MessageBox, MessageToast) {
+], function (Controller, History, JSONModel, MessageBox, MessageToast) {
     "use strict";
 
     var ALL_DATA = [
@@ -21,11 +19,22 @@ sap.ui.define([
         { Material: "20030277", MaterialName: "Stator SP 200-350. 4",   Activity: "0020", ActivityName: "Teile n. Zeichnung u. Stückliste kommiss", PlanMachine: 200,  RecommendedMachine: 160,  PlanLabor: 200,  RecommendedLabor: 160  },
         { Material: "20030277", MaterialName: "Stator SP 200-350. 4",   Activity: "0050", ActivityName: "Stator in Statorgehäuse Pos210 einschrum", PlanMachine: 60,   RecommendedMachine: 60,   PlanLabor: 60,   RecommendedLabor: 60   },
         { Material: "20030277", MaterialName: "Stator SP 200-350. 4",   Activity: "0080", ActivityName: "Stator entformen u. Vergussform reinigen", PlanMachine: 60,   RecommendedMachine: 30,   PlanLabor: 60,   RecommendedLabor: 30   },
-        { Material: "20030277", MaterialName: "Stator SP 200-350. 4",   Activity: "0110", ActivityName: "Endprüfung nach PAN u. kpl. verpacken",    PlanMachine: 120,  RecommendedMachine: 60,   PlanLabor: 120,  RecommendedLabor: 60   },
-        { Material: "20037183", MaterialName: "HF-Stator SP 400-440.4", Activity: "0010", ActivityName: "Feldspulen wickeln",                       PlanMachine: 2126, RecommendedMachine: 360,  PlanLabor: 746,  RecommendedLabor: 360  },
-        { Material: "20037183", MaterialName: "HF-Stator SP 400-440.4", Activity: "0030", ActivityName: "Stator kpl. isolieren u. Feldspulen einl", PlanMachine: 480,  RecommendedMachine: 240,  PlanLabor: 480,  RecommendedLabor: 240  },
-        { Material: "20037183", MaterialName: "HF-Stator SP 400-440.4", Activity: "0050", ActivityName: "Achtung! Vorgabezeiten neu aufnehmen",     PlanMachine: 960,  RecommendedMachine: 960,  PlanLabor: 960,  RecommendedLabor: 960  }
+        { Material: "20030277", MaterialName: "Stator SP 200-350. 4",   Activity: "0110", ActivityName: "Endprüfung nach PAN u. kpl. verpacken",    PlanMachine: 120,  RecommendedMachine: 60,   PlanLabor: 120,  RecommendedLabor: 60   }
+       
     ];
+
+    // Derive unique materials list for the Select control
+    var MATERIALS = (function () {
+        var seen = {};
+        var result = [];
+        ALL_DATA.forEach(function (o) {
+            if (!seen[o.Material]) {
+                seen[o.Material] = true;
+                result.push({ Material: o.Material, MaterialName: o.MaterialName, Label: o.Material + " – " + o.MaterialName });
+            }
+        });
+        return result;
+    }());
 
     return Controller.extend("prodroutingmngfree.controller.RoutingProposal", {
 
@@ -42,25 +51,48 @@ sap.ui.define([
                 OperationCounter: "",
                 CurrentOperation: {},
                 AllOperations: [],
-                AcceptedAllApplied: false
+                AcceptedAllApplied: false,
+                Materials: MATERIALS          // list for the Select
             });
             this.getView().setModel(oViewModel, "viewModel");
 
             var sMaterial = this._getMaterialFromURL();
             var sPlant    = this._getPlantFromURL();
-            if (!sMaterial) { sMaterial = "20021484"; }
+            if (!sMaterial) { sMaterial = MATERIALS[0].Material; }
             if (!sPlant)    { sPlant    = "1010"; }
 
-            oViewModel.setProperty("/Material", sMaterial);
             oViewModel.setProperty("/Plant", sPlant);
+            this._loadMaterial(sMaterial, sPlant);
+        },
+
+        // ─── Material switch ─────────────────────────────────────────────────────
+
+        /** Called when the user picks a different material in the Select */
+        onMaterialChange: function (oEvent) {
+            var sMaterial  = oEvent.getParameter("selectedItem").getKey();
+            var sPlant     = this.getView().getModel("viewModel").getProperty("/Plant");
+            this._loadMaterial(sMaterial, sPlant);
+        },
+
+        /** Central method: reset everything and load data for the given material */
+        _loadMaterial: function (sMaterial, sPlant) {
+            var oViewModel = this.getView().getModel("viewModel");
+
+            // Reset state
+            oViewModel.setProperty("/Material",              sMaterial);
+            oViewModel.setProperty("/Plant",                 sPlant);
+            oViewModel.setProperty("/AcceptedAllApplied",    false);
+            oViewModel.setProperty("/CurrentOperationIndex", 0);
+            oViewModel.setProperty("/AllOperations",         []);
+            oViewModel.setProperty("/CurrentOperation",      {});
+            oViewModel.setProperty("/TotalPlanned",          "0");
+            oViewModel.setProperty("/TotalProposed",         "0");
 
             this._initializeDataForMaterial(sMaterial, sPlant);
 
             var that = this;
-            setTimeout(function () { that._loadMaterialData(sMaterial, sPlant); }, 500);
+            setTimeout(function () { that._refreshTable(); }, 300);
         },
-
-        // ─── Data ────────────────────────────────────────────────────────────────
 
         _initializeDataForMaterial: function (sMaterial, sPlant) {
             var aFiltered = ALL_DATA
@@ -68,7 +100,7 @@ sap.ui.define([
                 .map(function (o) {
                     return Object.assign({}, o, {
                         Plant: sPlant,
-                        ProposedMachineTime: null,   // null = not yet confirmed by user
+                        ProposedMachineTime: null,
                         ProposedLaborTime:   null
                     });
                 });
@@ -77,6 +109,13 @@ sap.ui.define([
             this.getView().getModel("viewModel").setProperty("/MaterialName", sMatName);
 
             this.getView().setModel(new JSONModel({ Z_POC_C_ROUTING_ACTL_TIME: aFiltered }));
+        },
+
+        _refreshTable: function () {
+            var oTable = this.getView().byId("routingsTable");
+            if (!oTable) { return; }
+            var oBinding = oTable.getBinding("items");
+            if (oBinding) { oBinding.refresh(); }
         },
 
         // ─── URL params ──────────────────────────────────────────────────────────
@@ -92,8 +131,7 @@ sap.ui.define([
             } catch (e) {}
             var sSearch = window.location.hash.includes("?")
                 ? window.location.hash.split("?")[1] : window.location.search.substring(1);
-            var oP = new URLSearchParams(sSearch);
-            return oP.get("material") || oP.get("Material");
+            return new URLSearchParams(sSearch).get("material") || new URLSearchParams(sSearch).get("Material");
         },
 
         _getPlantFromURL: function () {
@@ -107,35 +145,18 @@ sap.ui.define([
             } catch (e) {}
             var sSearch = window.location.hash.includes("?")
                 ? window.location.hash.split("?")[1] : window.location.search.substring(1);
-            var oP = new URLSearchParams(sSearch);
-            return oP.get("plant") || oP.get("Plant");
-        },
-
-        // ─── Table ───────────────────────────────────────────────────────────────
-
-        _loadMaterialData: function (sMaterial, sPlant) {
-            var oTable = this.getView().byId("routingsTable");
-            if (!oTable) { return; }
-            var oBinding = oTable.getBinding("items");
-            if (oBinding) { oBinding.refresh(); }
+            return new URLSearchParams(sSearch).get("plant") || new URLSearchParams(sSearch).get("Plant");
         },
 
         // ─── Formatters ──────────────────────────────────────────────────────────
 
-        /** Planned total: Machine + Labor */
         formatTotal: function (fMachine, fLabor) {
             return ((parseFloat(fMachine) || 0) + (parseFloat(fLabor) || 0)).toFixed(2) + " min";
         },
 
-        /**
-         * Proposed badge total.
-         * Uses confirmed value if the user typed one; otherwise falls back to Recommended.
-         */
-        formatProposedTotal: function (fProposedMachine, fProposedLabor, fRecMachine, fRecLabor) {
-            var fM = (fProposedMachine !== null && fProposedMachine !== undefined && fProposedMachine !== "")
-                ? parseFloat(fProposedMachine) : (parseFloat(fRecMachine) || 0);
-            var fL = (fProposedLabor   !== null && fProposedLabor   !== undefined && fProposedLabor   !== "")
-                ? parseFloat(fProposedLabor)   : (parseFloat(fRecLabor)   || 0);
+        formatProposedTotal: function (fPropM, fPropL, fRecM, fRecL) {
+            var fM = (fPropM !== null && fPropM !== undefined && fPropM !== "") ? parseFloat(fPropM) : (parseFloat(fRecM) || 0);
+            var fL = (fPropL !== null && fPropL !== undefined && fPropL !== "") ? parseFloat(fPropL) : (parseFloat(fRecL) || 0);
             return (fM + fL).toFixed(2) + " min";
         },
 
@@ -164,8 +185,8 @@ sap.ui.define([
             oViewModel.setProperty("/TotalOperations", aOperations.length);
 
             if (aOperations.length > 0) {
-                var iIdx = oViewModel.getProperty("/CurrentOperationIndex");
-                if (!iIdx || iIdx >= aOperations.length) { iIdx = 0; }
+                var iIdx = oViewModel.getProperty("/CurrentOperationIndex") || 0;
+                if (iIdx >= aOperations.length) { iIdx = 0; }
                 this._setCurrentOperation(iIdx);
             }
         },
@@ -180,7 +201,6 @@ sap.ui.define([
                 oViewModel.setProperty("/CurrentOperation",      Object.assign({}, oOp));
                 oViewModel.setProperty("/OperationCounter",      (iIndex + 1) + " of " + aOperations.length);
 
-                // Placeholders = Recommended values
                 var oMachineInput = this.getView().byId("machineInput");
                 var oLaborInput   = this.getView().byId("laborInput");
                 if (oMachineInput) { oMachineInput.setPlaceholder(String(oOp.RecommendedMachine || 0)); }
@@ -188,11 +208,6 @@ sap.ui.define([
             }
         },
 
-        /**
-         * Grand totals:
-         *  Planned  = sum PlanMachine + PlanLabor
-         *  Proposed = confirmed value if set, otherwise Recommended (mirrors placeholder logic)
-         */
         _calculateGrandTotals: function () {
             var oTable     = this.getView().byId("routingsTable");
             var oViewModel = this.getView().getModel("viewModel");
@@ -202,18 +217,13 @@ sap.ui.define([
             oTable.getItems().forEach(function (oItem) {
                 var oCtx = oItem.getBindingContext();
                 if (!oCtx) { return; }
-
-                fPlanned += (parseFloat(oCtx.getProperty("PlanMachine")) || 0)
+                fPlanned  += (parseFloat(oCtx.getProperty("PlanMachine")) || 0)
                            + (parseFloat(oCtx.getProperty("PlanLabor"))   || 0);
-
-                var fPropM = oCtx.getProperty("ProposedMachineTime");
-                var fPropL = oCtx.getProperty("ProposedLaborTime");
-
+                var fPM = oCtx.getProperty("ProposedMachineTime");
+                var fPL = oCtx.getProperty("ProposedLaborTime");
                 fProposed +=
-                    ((fPropM !== null && fPropM !== undefined && fPropM !== "")
-                        ? parseFloat(fPropM) : (parseFloat(oCtx.getProperty("RecommendedMachine")) || 0))
-                  + ((fPropL !== null && fPropL !== undefined && fPropL !== "")
-                        ? parseFloat(fPropL) : (parseFloat(oCtx.getProperty("RecommendedLabor"))   || 0));
+                    ((fPM !== null && fPM !== undefined && fPM !== "") ? parseFloat(fPM) : (parseFloat(oCtx.getProperty("RecommendedMachine")) || 0))
+                  + ((fPL !== null && fPL !== undefined && fPL !== "") ? parseFloat(fPL) : (parseFloat(oCtx.getProperty("RecommendedLabor"))   || 0));
             });
 
             oViewModel.setProperty("/TotalPlanned",  fPlanned.toFixed(0));
@@ -238,12 +248,11 @@ sap.ui.define([
             if (aOperations[iIdx]) {
                 aOperations[iIdx][sTimeType] = fNewValue;
                 oViewModel.setProperty("/AllOperations", aOperations);
-
-                var oModel    = this.getView().getModel();
-                var aMockData = oModel.getProperty("/Z_POC_C_ROUTING_ACTL_TIME");
-                if (aMockData[iIdx]) {
-                    aMockData[iIdx][sTimeType] = fNewValue;
-                    oModel.setProperty("/Z_POC_C_ROUTING_ACTL_TIME", aMockData);
+                var oModel = this.getView().getModel();
+                var aData  = oModel.getProperty("/Z_POC_C_ROUTING_ACTL_TIME");
+                if (aData[iIdx]) {
+                    aData[iIdx][sTimeType] = fNewValue;
+                    oModel.setProperty("/Z_POC_C_ROUTING_ACTL_TIME", aData);
                 }
                 this._calculateGrandTotals();
             }
@@ -253,27 +262,25 @@ sap.ui.define([
 
         onAcceptAllPlannedTimes: function () {
             var oModel    = this.getView().getModel();
-            var aMockData = oModel.getProperty("/Z_POC_C_ROUTING_ACTL_TIME");
+            var aData     = oModel.getProperty("/Z_POC_C_ROUTING_ACTL_TIME");
             var iUpdated  = 0;
 
-            aMockData.forEach(function (oOp) {
+            aData.forEach(function (oOp) {
                 oOp.ProposedMachineTime = parseFloat(oOp.RecommendedMachine) || 0;
                 oOp.ProposedLaborTime   = parseFloat(oOp.RecommendedLabor)   || 0;
                 iUpdated++;
             });
-
-            oModel.setProperty("/Z_POC_C_ROUTING_ACTL_TIME", aMockData);
+            oModel.setProperty("/Z_POC_C_ROUTING_ACTL_TIME", aData);
 
             var oViewModel = this.getView().getModel("viewModel");
-            oViewModel.setProperty("/AllOperations",      aMockData);
+            oViewModel.setProperty("/AllOperations",      aData);
             oViewModel.setProperty("/AcceptedAllApplied", true);
 
             var iIdx = oViewModel.getProperty("/CurrentOperationIndex");
-            if (iIdx >= 0 && iIdx < aMockData.length) {
-                oViewModel.setProperty("/CurrentOperation/ProposedMachineTime", aMockData[iIdx].ProposedMachineTime);
-                oViewModel.setProperty("/CurrentOperation/ProposedLaborTime",   aMockData[iIdx].ProposedLaborTime);
+            if (iIdx >= 0 && iIdx < aData.length) {
+                oViewModel.setProperty("/CurrentOperation/ProposedMachineTime", aData[iIdx].ProposedMachineTime);
+                oViewModel.setProperty("/CurrentOperation/ProposedLaborTime",   aData[iIdx].ProposedLaborTime);
             }
-
             this._calculateGrandTotals();
             MessageToast.show("Recommended times accepted for all " + iUpdated + " operations");
         },
@@ -287,13 +294,11 @@ sap.ui.define([
                 oOp.ProposedMachineTime = null;
                 oOp.ProposedLaborTime   = null;
             });
-
             oModel.setProperty("/Z_POC_C_ROUTING_ACTL_TIME", aOperations);
             oViewModel.setProperty("/AllOperations",      aOperations);
             oViewModel.setProperty("/AcceptedAllApplied", false);
 
-            var iIdx = oViewModel.getProperty("/CurrentOperationIndex");
-            this._setCurrentOperation(iIdx);
+            this._setCurrentOperation(oViewModel.getProperty("/CurrentOperationIndex"));
             this._calculateGrandTotals();
             MessageToast.show("All proposed times were cleared.");
         },
@@ -322,34 +327,26 @@ sap.ui.define([
         // ─── Save ────────────────────────────────────────────────────────────────
 
         onSaveNewRoutingTimes: function () {
-            var oModel     = this.getView().getModel();
-            var aMockData  = oModel.getProperty("/Z_POC_C_ROUTING_ACTL_TIME");
-            var oViewModel = this.getView().getModel("viewModel");
-            var sMaterial  = oViewModel.getProperty("/Material");
-            var bHas       = false;
-            var iUpdates   = 0;
+            var oModel    = this.getView().getModel();
+            var aData     = oModel.getProperty("/Z_POC_C_ROUTING_ACTL_TIME");
+            var sMaterial = this.getView().getModel("viewModel").getProperty("/Material");
+            var bHas      = false;
+            var iUpdates  = 0;
 
-            aMockData.forEach(function (oOp) {
-                if ((parseFloat(oOp.ProposedMachineTime) || 0) > 0 ||
-                    (parseFloat(oOp.ProposedLaborTime)   || 0) > 0) {
+            aData.forEach(function (oOp) {
+                if ((parseFloat(oOp.ProposedMachineTime) || 0) > 0 || (parseFloat(oOp.ProposedLaborTime) || 0) > 0) {
                     bHas = true; iUpdates++;
                 }
             });
 
-            if (!bHas) {
-                MessageBox.warning("Please enter at least one proposed time before saving.");
-                return;
-            }
+            if (!bHas) { MessageBox.warning("Please enter at least one proposed time before saving."); return; }
 
-            MessageBox.confirm(
-                "Do you want to save " + iUpdates + " proposed routing time(s)?",
-                {
-                    title: "Confirm Save",
-                    onClose: function (oAction) {
-                        if (oAction === MessageBox.Action.OK) { this._performSave(sMaterial, iUpdates); }
-                    }.bind(this)
-                }
-            );
+            MessageBox.confirm("Do you want to save " + iUpdates + " proposed routing time(s)?", {
+                title: "Confirm Save",
+                onClose: function (oAction) {
+                    if (oAction === MessageBox.Action.OK) { this._performSave(sMaterial, iUpdates); }
+                }.bind(this)
+            });
         },
 
         _performSave: function (sMaterial, iUpdates) {
@@ -357,8 +354,7 @@ sap.ui.define([
             setTimeout(function () {
                 this.getView().setBusy(false);
                 MessageBox.success(
-                    "Routing values for material " + sMaterial + " were updated successfully!\n\n" +
-                    iUpdates + " operation(s) updated.",
+                    "Routing values for material " + sMaterial + " were updated successfully!\n\n" + iUpdates + " operation(s) updated.",
                     { title: "Success" }
                 );
                 var oBinding = this.getView().byId("routingsTable").getBinding("items");
@@ -375,19 +371,16 @@ sap.ui.define([
         _attachSelectOnFocusHandlers: function () {
             var oView   = this.getView();
             var aInputs = [];
-
-            var oTable = oView.byId("routingsTable");
+            var oTable  = oView.byId("routingsTable");
             if (oTable) {
                 aInputs = aInputs.concat(oTable.findAggregatedObjects(true, function (oCtrl) {
                     return oCtrl.isA("sap.m.Input") && oCtrl.data("selectOnFocus") === "true";
                 }));
             }
-
             ["machineInput", "laborInput"].forEach(function (sId) {
                 var oInput = oView.byId(sId);
                 if (oInput && oInput.data("selectOnFocus") === "true") { aInputs.push(oInput); }
             });
-
             aInputs.forEach(function (oInput) {
                 oInput.$().off("focus").on("focus", function () {
                     setTimeout(function () {
@@ -400,11 +393,8 @@ sap.ui.define([
 
         onNavBack: function () {
             var sPrev = History.getInstance().getPreviousHash();
-            if (sPrev !== undefined) {
-                window.history.go(-1);
-            } else {
-                this.getOwnerComponent().getRouter().navTo("overview", {}, true);
-            }
+            if (sPrev !== undefined) { window.history.go(-1); }
+            else { this.getOwnerComponent().getRouter().navTo("overview", {}, true); }
         }
     });
 });

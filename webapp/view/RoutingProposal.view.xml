@@ -2,29 +2,36 @@
     controllerName="prodroutingmngfree.controller.RoutingProposal"
     xmlns:mvc="sap.ui.core.mvc"
     xmlns="sap.m"
+    xmlns:f="sap.f"
     xmlns:core="sap.ui.core"
     xmlns:layout="sap.ui.layout"
     displayBlock="true">
-    
-    <Page id="_IDGenPage"
-        title="Production Routings Manager"
-        showNavButton="true"
-        navButtonPress=".onNavBack"
-        class="sapUiResponsiveContentPadding">
-        
-        <content>
-            <VBox id="_IDGenVBox1" class="sapUiLargeMargin" fitContainer="true">
-                
-                <!-- Material Header -->
-                <layout:VerticalLayout class="sapUiMediumMarginBottom" width="100%">
-                    <VBox class="sapUiContentPadding sapUiSmallMarginBottom" alignItems="Center">
-                        <Label text="Material" design="Bold" class="sapUiTinyMarginBottom"/>
-                        <Title text="{viewModel>/Material}" level="H1" titleStyle="H1" class="sapUiTinyMarginBottom"/>
-                        <Text text="{viewModel>/MaterialName}"/>
-                    </VBox>
-                </layout:VerticalLayout>
-                
-                <!-- View Toggle -->
+
+    <f:DynamicPage id="dynamicPage" toggleHeaderOnTitleClick="true" headerExpanded="false">
+
+        <f:title>
+            <f:DynamicPageTitle>
+                <f:heading>
+                    <Title text="Production Routings Manager" level="H3" titleStyle="H3"/>
+                </f:heading>
+                <f:navigationActions>
+                    <Button icon="sap-icon://nav-back" type="Transparent" press=".onNavBack"/>
+                </f:navigationActions>
+            </f:DynamicPageTitle>
+        </f:title>
+
+        <f:header>
+            <f:DynamicPageHeader pinnable="true">
+                <HBox alignItems="Start" justifyContent="Start" class="sapUiContentPadding">
+                    <Label text="Change material:" design="Bold" class="sapUiSmallMarginEnd" labelFor="materialSelect"/>
+                    <Select id="materialSelect"
+                        width="340px"
+                        selectedKey="{viewModel>/Material}"
+                        change=".onMaterialChange"
+                        items="{viewModel>/Materials}">
+                        <core:Item key="{viewModel>Material}" text="{viewModel>Label}"/>
+                    </Select>
+                </HBox>
                 <HBox justifyContent="End" class="sapUiSmallMarginBottom">
                     <SegmentedButton id="viewToggle"
                         selectedKey="{viewModel>/ViewMode}"
@@ -35,7 +42,33 @@
                         </items>
                     </SegmentedButton>
                 </HBox>
-                
+            </f:DynamicPageHeader>
+        </f:header>
+
+        <f:content>
+            <VBox class="sapUiLargeMargin" fitContainer="true">
+
+                <!-- Material Header -->
+                <layout:VerticalLayout class="sapUiMediumMarginBottom" width="100%">
+                    <VBox class="sapUiContentPadding sapUiSmallMarginBottom" alignItems="Center">
+                        <Label text="Material" design="Bold" class="sapUiTinyMarginBottom"/>
+                        <Title text="{viewModel>/Material}" level="H1" titleStyle="H1" class="sapUiTinyMarginBottom"/>
+                        <Text text="{viewModel>/MaterialName}"/>
+                    </VBox>
+                </layout:VerticalLayout>
+
+                <!-- View Toggle -->
+                <!-- <HBox justifyContent="End" class="sapUiSmallMarginBottom">
+                    <SegmentedButton id="viewToggle"
+                        selectedKey="{viewModel>/ViewMode}"
+                        selectionChange=".onViewModeChange">
+                        <items>
+                            <SegmentedButtonItem key="table"  icon="sap-icon://table-view"  text="Table View"/>
+                            <SegmentedButtonItem key="single" icon="sap-icon://detail-view" text="Single View"/>
+                        </items>
+                    </SegmentedButton>
+                </HBox> -->
+
                 <!-- ═══════════════════════════════════════════════════════ TABLE VIEW -->
                 <Panel id="tableViewPanel"
                     headerText="Production Routings"
@@ -44,10 +77,9 @@
                     width="auto"
                     expandable="false"
                     backgroundDesign="Solid">
-                    
                     <content>
                         <VBox class="sapUiContentPadding">
-                            
+
                             <Table id="routingsTable"
                                 items="{/Z_POC_C_ROUTING_ACTL_TIME}"
                                 growing="true"
@@ -55,35 +87,27 @@
                                 mode="None"
                                 updateFinished=".onTableUpdateFinished"
                                 width="auto">
-                                
                                 <columns>
-                                    <!-- Activity -->
                                     <Column width="12%" minScreenWidth="Tablet" demandPopin="true">
                                         <Text text="Activity" class="sapUiSmallMarginBegin"/>
                                     </Column>
-                                    <!-- Description -->
                                     <Column width="25%" minScreenWidth="Tablet" demandPopin="true">
                                         <Text text="Description" class="sapUiSmallMarginBegin"/>
                                     </Column>
-                                    <!-- Planned Times -->
                                     <Column width="28%" minScreenWidth="Tablet" demandPopin="true" hAlign="Begin">
                                         <Text text="Planned Times" class="sapUiSmallMarginBegin"/>
                                     </Column>
-                                    <!-- Proposed Times -->
                                     <Column width="35%" minScreenWidth="Tablet" demandPopin="false" hAlign="Begin">
                                         <Text text="Proposed Times" class="sapUiSmallMarginBegin"/>
                                     </Column>
                                 </columns>
-                                
                                 <items>
                                     <ColumnListItem vAlign="Middle" type="Inactive">
-                                        
-                                        <!-- Activity -->
+
                                         <VBox class="sapUiSmallMarginBegin sapUiSmallMarginTop sapUiSmallMarginBottom" justifyContent="Center">
                                             <ObjectNumber number="{Activity}" emphasized="true" state="Information"/>
                                         </VBox>
-                                        
-                                        <!-- Description + row labels -->
+
                                         <VBox class="sapUiSmallMarginBegin sapUiSmallMarginTop sapUiSmallMarginBottom">
                                             <Title text="{ActivityName}" level="H5" wrapping="true" class="sapUiSmallMarginBottom"/>
                                             <VBox class="sapUiTinyMarginTop">
@@ -91,36 +115,27 @@
                                                 <Label text="Labor"   design="Bold" class="sapUiTinyMarginTop"/>
                                             </VBox>
                                         </VBox>
-                                        
-                                        <!-- Planned Times (read-only) -->
+
                                         <VBox class="sapUiSmallMarginBegin sapUiSmallMarginTop sapUiSmallMarginBottom">
                                             <ObjectNumber
-                                                number="{
-                                                    parts: [{path:'PlanMachine'},{path:'PlanLabor'}],
-                                                    formatter: '.formatTotal'
-                                                }"
-                                                emphasized="true" state="Success"
-                                                class="sapUiSmallMarginBottom"/>
+                                                number="{parts:[{path:'PlanMachine'},{path:'PlanLabor'}],formatter:'.formatTotal'}"
+                                                emphasized="true" state="Success" class="sapUiSmallMarginBottom"/>
                                             <VBox class="sapUiTinyMarginTop">
                                                 <Text text="{PlanMachine} min" class="sapUiTinyMarginTop"/>
                                                 <Text text="{PlanLabor} min"   class="sapUiTinyMarginTop"/>
                                             </VBox>
                                         </VBox>
-                                        
-                                        <!-- Proposed Times (editable; placeholder = Recommended) -->
+
                                         <VBox class="sapUiSmallMarginBegin sapUiSmallMarginTop sapUiSmallMarginBottom">
                                             <ObjectNumber
                                                 number="{
-                                                    parts: [
-                                                        {path:'ProposedMachineTime'},
-                                                        {path:'ProposedLaborTime'},
-                                                        {path:'RecommendedMachine'},
-                                                        {path:'RecommendedLabor'}
+                                                    parts:[
+                                                        {path:'ProposedMachineTime'},{path:'ProposedLaborTime'},
+                                                        {path:'RecommendedMachine'},{path:'RecommendedLabor'}
                                                     ],
-                                                    formatter: '.formatProposedTotal'
+                                                    formatter:'.formatProposedTotal'
                                                 }"
-                                                emphasized="true" state="Warning"
-                                                class="sapUiSmallMarginBottom"/>
+                                                emphasized="true" state="Warning" class="sapUiSmallMarginBottom"/>
                                             <VBox class="sapUiTinyMarginTop">
                                                 <HBox alignItems="Center">
                                                     <Input width="130px" type="Number"
@@ -144,65 +159,56 @@
                                                 </HBox>
                                             </VBox>
                                         </VBox>
-                                        
+
                                     </ColumnListItem>
                                 </items>
                             </Table>
-                            
+
                             <!-- Totals -->
-                            <Panel headerText="Totals Summary"
-                                class="sapUiMediumMarginTop"
-                                backgroundDesign="Transparent">
+                            <Panel headerText="Totals Summary" class="sapUiMediumMarginTop" backgroundDesign="Transparent">
                                 <content>
                                     <HBox justifyContent="SpaceAround" alignItems="Center" class="sapUiContentPadding">
                                         <VBox alignItems="Center" class="sapUiLargeMarginEnd">
                                             <Label text="Total Planned" class="sapUiTinyMarginBottom"/>
-                                            <ObjectNumber number="{viewModel>/TotalPlanned}"
-                                                unit="min" emphasized="true" state="Success"
-                                                class="sapUiMediumMarginTop"/>
+                                            <ObjectNumber number="{viewModel>/TotalPlanned}" unit="min"
+                                                emphasized="true" state="Success" class="sapUiMediumMarginTop"/>
                                         </VBox>
                                         <VBox alignItems="Center" class="sapUiLargeMarginBegin">
                                             <Label text="Total Proposed" class="sapUiTinyMarginBottom"/>
-                                            <ObjectNumber number="{viewModel>/TotalProposed}"
-                                                unit="min" emphasized="true" state="Warning"
-                                                class="sapUiMediumMarginTop"/>
+                                            <ObjectNumber number="{viewModel>/TotalProposed}" unit="min"
+                                                emphasized="true" state="Warning" class="sapUiMediumMarginTop"/>
                                         </VBox>
                                     </HBox>
                                 </content>
                             </Panel>
-                            
+
                             <!-- Action Buttons -->
                             <VBox alignItems="Center" class="sapUiLargeMarginTop sapUiLargeMarginBottom">
                                 <HBox justifyContent="Center" width="100%" class="sapUiSmallMarginBottom">
                                     <Button id="acceptAllButton"
                                         text="Accept All Recommended Times"
-                                        type="Ghost"
-                                        icon="sap-icon://accept"
+                                        type="Ghost" icon="sap-icon://accept"
                                         press=".onAcceptAllPlannedTimes"
                                         visible="{= !${viewModel>/AcceptedAllApplied} }"
-                                        width="300px"
-                                        class="sapUiSmallMarginEnd"/>
+                                        width="300px" class="sapUiSmallMarginEnd"/>
                                     <Button id="revertAcceptAllButton"
                                         text="Revert All Proposed Times"
-                                        type="Ghost"
-                                        icon="sap-icon://decline"
+                                        type="Ghost" icon="sap-icon://decline"
                                         press="._onRevertAllProposedTimes"
                                         visible="{= ${viewModel>/AcceptedAllApplied} }"
-                                        width="300px"
-                                        class="sapUiSmallMarginEnd"/>
+                                        width="300px" class="sapUiSmallMarginEnd"/>
                                     <Button id="_IDGenButton"
                                         text="Save New Routing Times"
-                                        type="Emphasized"
-                                        icon="sap-icon://save"
+                                        type="Emphasized" icon="sap-icon://save"
                                         press=".onSaveNewRoutingTimes"
                                         width="300px"/>
                                 </HBox>
                             </VBox>
-                            
+
                         </VBox>
                     </content>
                 </Panel>
-                
+
                 <!-- ═══════════════════════════════════════════════════ SINGLE VIEW -->
                 <Panel id="singleViewPanel"
                     headerText="Operation Entry"
@@ -211,11 +217,9 @@
                     width="auto"
                     expandable="false"
                     backgroundDesign="Solid">
-                    
                     <content>
                         <VBox class="sapUiContentPadding">
-                            
-                            <!-- Header -->
+
                             <HBox width="100%" justifyContent="SpaceBetween" alignItems="Center" class="sapUiLargeMarginBottom">
                                 <Title text="Material {viewModel>/Material} – {viewModel>/Plant}" level="H2" titleStyle="H2"/>
                             </HBox>
@@ -224,13 +228,11 @@
                                 <Title level="H3" titleStyle="H3" text="{viewModel>/CurrentOperation/ActivityName}"/>
                             </HBox>
 
-                            <!-- Navigation -->
                             <HBox width="100%" justifyContent="SpaceBetween" alignItems="Center" class="sapUiLargeMarginBottom">
                                 <Title text="Routings:" level="H4"/>
                                 <HBox justifyContent="Center" alignItems="Center" class="sapUiSmallMarginEnd">
                                     <Button id="prevButton"
-                                        icon="sap-icon://navigation-left-arrow"
-                                        type="Transparent"
+                                        icon="sap-icon://navigation-left-arrow" type="Transparent"
                                         press=".onPreviousOperation"
                                         enabled="{= ${viewModel>/CurrentOperationIndex} > 0 }"
                                         width="60px"/>
@@ -239,63 +241,79 @@
                                         <Title text="Activity {viewModel>/CurrentOperation/Activity}" level="H3" titleStyle="H3"/>
                                     </VBox>
                                     <Button id="nextButton"
-                                        icon="sap-icon://navigation-right-arrow"
-                                        type="Transparent"
+                                        icon="sap-icon://navigation-right-arrow" type="Transparent"
                                         press=".onNextOperation"
                                         enabled="{= ${viewModel>/CurrentOperationIndex} &lt; ${viewModel>/TotalOperations} - 1 }"
                                         width="60px"/>
                                 </HBox>
                             </HBox>
-                            
-                            <!-- Time grid: Machine | Labor | Total  ×  Planned | Proposed -->
+
+                            <!-- Time grid -->
                             <VBox width="100%" class="sapUiLargeMarginTop">
 
-                                <!-- Header row -->
+                                <!-- Column headers -->
                                 <HBox width="100%" class="sapUiMediumMarginBottom">
                                     <VBox width="20%"/>
                                     <VBox width="20%" alignItems="Center">
-                                        <Title text="Machine" level="H3" titleStyle="H3"/>
+                                        <Label text="Machine" design="Bold"/>
                                     </VBox>
                                     <VBox width="20%" alignItems="Center">
-                                        <Title text="Labor" level="H3" titleStyle="H3"/>
+                                        <Label text="Labor" design="Bold"/>
                                     </VBox>
                                     <VBox width="20%" alignItems="Center">
-                                        <Title text="Total" level="H3" titleStyle="H3"/>
+                                        <Label text="Total" design="Bold"/>
                                     </VBox>
                                 </HBox>
 
-                                <!-- Planned row -->
-                                <HBox width="100%" class="sapUiMediumMarginBottom">
-                                    <VBox width="20%" justifyContent="Center">
-                                        <Title text="Planned" level="H4"/>
+                                <!-- Planned row: ObjectNumber (green, emphasized) + plain Text values — same as table view -->
+                                <HBox width="100%" class="sapUiMediumMarginBottom" alignItems="Center">
+                                    <VBox width="20%">
+                                        <Label text="Planned" design="Bold"/>
                                     </VBox>
-                                    <VBox width="20%" alignItems="Center" justifyContent="Center">
-                                        <Title text="{viewModel>/CurrentOperation/PlanMachine} min" level="H3" titleStyle="H3"/>
+                                    <!-- Machine planned -->
+                                    <VBox width="20%" alignItems="Center">
+                                        <VBox alignItems="Center">
+                                            <ObjectNumber
+                                                number="{viewModel>/CurrentOperation/PlanMachine}"
+                                                unit="min"
+                                                emphasized="true" 
+                                                state="Success"/>
+                                        </VBox>
                                     </VBox>
-                                    <VBox width="20%" alignItems="Center" justifyContent="Center">
-                                        <Title text="{viewModel>/CurrentOperation/PlanLabor} min" level="H3" titleStyle="H3"/>
+                                    <!-- Labor planned -->
+                                    <VBox width="20%" alignItems="Center">
+                                        <VBox alignItems="Center">
+                                            <ObjectNumber
+                                                number="{viewModel>/CurrentOperation/PlanLabor}"
+                                                unit="min"
+                                                emphasized="true"
+                                                state="Success"/>
+                                        </VBox>
                                     </VBox>
-                                    <VBox width="20%" alignItems="Center" justifyContent="Center">
-                                        <Title text="{
-                                            parts: [
-                                                {path:'viewModel>/CurrentOperation/PlanMachine'},
-                                                {path:'viewModel>/CurrentOperation/PlanLabor'}
-                                            ],
-                                            formatter: '.formatCurrentOperationTotal'
-                                        }" level="H3" titleStyle="H3"/>
+                                    <!-- Total planned -->
+                                    <VBox width="20%" alignItems="Center">
+                                        <ObjectNumber
+                                            number="{
+                                                parts:[
+                                                    {path:'viewModel>/CurrentOperation/PlanMachine'},
+                                                    {path:'viewModel>/CurrentOperation/PlanLabor'}
+                                                ],
+                                                formatter:'.formatCurrentOperationTotal'
+                                            }"
+                                            emphasized="true"
+                                            state="Success"/>
                                     </VBox>
                                 </HBox>
 
-                                <!-- Proposal row (inputs; placeholder = Recommended) -->
-                                <HBox width="100%" class="sapUiLargeMarginBottom">
-                                    <VBox width="20%" justifyContent="Center">
-                                        <Title text="Proposal" level="H4"/>
+                                <!-- Proposal row -->
+                                <HBox width="100%" class="sapUiLargeMarginBottom" alignItems="Center">
+                                    <VBox width="20%">
+                                        <Label text="Proposal" design="Bold"/>
                                     </VBox>
                                     <!-- Machine input -->
-                                    <VBox width="20%" alignItems="Center" justifyContent="Center">
+                                    <VBox width="20%" alignItems="Center">
                                         <HBox alignItems="Center">
-                                            <Input id="machineInput"
-                                                type="Number" width="130px" textAlign="Center"
+                                            <Input id="machineInput" type="Number" width="120px" textAlign="End"
                                                 value="{viewModel>/CurrentOperation/ProposedMachineTime}"
                                                 change=".onSingleViewTimeChange">
                                                 <customData>
@@ -307,10 +325,9 @@
                                         </HBox>
                                     </VBox>
                                     <!-- Labor input -->
-                                    <VBox width="20%" alignItems="Center" justifyContent="Center">
+                                    <VBox width="20%" alignItems="Center">
                                         <HBox alignItems="Center">
-                                            <Input id="laborInput"
-                                                type="Number" width="130px" textAlign="Center"
+                                            <Input id="laborInput" type="Number" width="120px" textAlign="End"
                                                 value="{viewModel>/CurrentOperation/ProposedLaborTime}"
                                                 change=".onSingleViewTimeChange">
                                                 <customData>
@@ -321,51 +338,52 @@
                                             <Text text="min" class="sapUiSmallMarginBegin"/>
                                         </HBox>
                                     </VBox>
-                                    <!-- Total proposal -->
-                                    <VBox width="20%" alignItems="Center" justifyContent="Center">
-                                        <Title text="{
-                                            parts: [
-                                                {path:'viewModel>/CurrentOperation/ProposedMachineTime'},
-                                                {path:'viewModel>/CurrentOperation/ProposedLaborTime'}
-                                            ],
-                                            formatter: '.formatCurrentOperationTotal'
-                                        }" level="H3" titleStyle="H3"/>
+                                    <!-- Total proposed — orange, falls back to Recommended when empty -->
+                                    <VBox width="20%" alignItems="Center">
+                                        <ObjectNumber
+                                            number="{
+                                                parts:[
+                                                    {path:'viewModel>/CurrentOperation/ProposedMachineTime'},
+                                                    {path:'viewModel>/CurrentOperation/ProposedLaborTime'},
+                                                    {path:'viewModel>/CurrentOperation/RecommendedMachine'},
+                                                    {path:'viewModel>/CurrentOperation/RecommendedLabor'}
+                                                ],
+                                                formatter:'.formatProposedTotal'
+                                            }"
+                                            emphasized="true"
+                                            state="Warning"/>
                                     </VBox>
                                 </HBox>
 
                             </VBox>
-                            
+
                             <!-- Action Buttons -->
                             <HBox justifyContent="Center" width="100%" class="sapUiSmallMarginBottom">
                                 <Button id="acceptAllButton2"
                                     text="Accept All Recommended Times"
-                                    type="Ghost"
-                                    icon="sap-icon://accept"
+                                    type="Ghost" icon="sap-icon://accept"
                                     press=".onAcceptAllPlannedTimes"
                                     visible="{= !${viewModel>/AcceptedAllApplied} }"
-                                    width="300px"
-                                    class="sapUiSmallMarginEnd"/>
+                                    width="300px" class="sapUiSmallMarginEnd"/>
                                 <Button id="revertAcceptAllButton2"
                                     text="Revert All Proposed Times"
-                                    type="Ghost"
-                                    icon="sap-icon://decline"
+                                    type="Ghost" icon="sap-icon://decline"
                                     press="._onRevertAllProposedTimes"
                                     visible="{= ${viewModel>/AcceptedAllApplied} }"
-                                    width="300px"
-                                    class="sapUiSmallMarginEnd"/>
+                                    width="300px" class="sapUiSmallMarginEnd"/>
                                 <Button id="_IDGenButton2"
                                     text="Save New Routing Times"
-                                    type="Emphasized"
-                                    icon="sap-icon://save"
+                                    type="Emphasized" icon="sap-icon://save"
                                     press=".onSaveNewRoutingTimes"
                                     width="300px"/>
                             </HBox>
-                            
+
                         </VBox>
                     </content>
                 </Panel>
-                
+
             </VBox>
-        </content>
-    </Page>
+        </f:content>
+
+    </f:DynamicPage>
 </mvc:View>
